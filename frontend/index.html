@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlueTrust - Blockchain Carbon Credit Platform</title>
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Web3.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@4.2.0/dist/web3.min.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Network Status Bar -->
+    <div class="network-bar">
+        <div class="container">
+            <div class="network-status">
+                <span class="status-dot" id="networkStatus"></span>
+                <span id="networkName">Local Blockchain</span>
+                <span class="separator">|</span>
+                <span>Chain ID: 31337</span>
+            </div>
+            <div class="wallet-connection">
+                <button id="connectWallet" class="btn btn--primary btn--sm">
+                    <i class="fas fa-wallet"></i> Connect Wallet
+                </button>
+                <div id="walletInfo" class="wallet-info hidden">
+                    <span id="walletAddress"></span>
+                    <button id="disconnectWallet" class="btn btn--secondary btn--sm">Disconnect</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p id="loadingText">Processing blockchain transaction...</p>
+        </div>
+    </div>
+
+    <!-- Login/Registration Screen -->
+    <div id="loginScreen" class="screen active">
+        <div class="container">
+            <div class="login-container">
+                <div class="logo">
+                    <div class="logo-icon">🌊</div>
+                    <h1>BlueTrust</h1>
+                    <p>Blockchain-Based Carbon Credit Platform</p>
+                    <div class="blockchain-badge">
+                        <i class="fas fa-link"></i>
+                        <span>Self-Hosted Blockchain</span>
+                    </div>
+                </div>
+                
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="showTab('login')">Login</button>
+                    <button class="tab-btn" onclick="showTab('register')">Register</button>
+                </div>
+
+                <!-- Login Form -->
+                <div id="loginForm" class="form-container active">
+                    <form onsubmit="handleLogin(event)">
+                        <div class="form-group">
+                            <label class="form-label">User Type</label>
+                            <select class="form-control" id="loginUserType" required>
+                                <option value="">Select User Type</option>
+                                <option value="ngo">NGO/Individual</option>
+                                <option value="government">Government Official</option>
+                                <option value="company">Company</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email/Registration ID</label>
+                            <input type="text" class="form-control" id="loginId" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" id="loginPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn--primary btn--full-width">
+                            <i class="fas fa-sign-in-alt"></i> Login to Blockchain
+                        </button>
+                    </form>
+
+                    <!-- Demo Accounts -->
+                    <div class="demo-accounts">
+                        <h4><i class="fas fa-users"></i> Demo Accounts (Click to Auto-fill)</h4>
+                        <div class="demo-grid">
+                            <div class="demo-account" onclick="setDemoAccount('ngo')">
+                                <div class="demo-icon">🌱</div>
+                                <div class="demo-info">
+                                    <strong>NGO Account</strong>
+                                    <span>ngo@demo.com / demo123</span>
+                                </div>
+                            </div>
+                            <div class="demo-account" onclick="setDemoAccount('government')">
+                                <div class="demo-icon">🏛️</div>
+                                <div class="demo-info">
+                                    <strong>Government</strong>
+                                    <span>gov@demo.com / demo123</span>
+                                </div>
+                            </div>
+                            <div class="demo-account" onclick="setDemoAccount('company')">
+                                <div class="demo-icon">🏢</div>
+                                <div class="demo-info">
+                                    <strong>Company</strong>
+                                    <span>company@demo.com / demo123</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Registration Form -->
+                <div id="registerForm" class="form-container">
+                    <form onsubmit="handleRegistration(event)">
+                        <div class="form-group">
+                            <label class="form-label">User Type</label>
+                            <select class="form-control" id="regUserType" onchange="showRegistrationFields()" required>
+                                <option value="">Select User Type</option>
+                                <option value="ngo">NGO/Individual</option>
+                                <option value="government">Government Official</option>
+                                <option value="company">Company</option>
+                            </select>
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Registration Fields -->
+                        <div id="ngoFields" class="registration-fields">
+                            <div class="form-group">
+                                <label class="form-label">NGO Darpan ID</label>
+                                <input type="text" class="form-control" placeholder="NG-DEL-12345">
+                            </div>
+                        </div>
+
+                        <div id="govFields" class="registration-fields">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Employee ID</label>
+                                    <input type="text" class="form-control" placeholder="ENV-001">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Department</label>
+                                    <input type="text" class="form-control" placeholder="Ministry of Environment">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="companyFields" class="registration-fields">
+                            <div class="form-group">
+                                <label class="form-label">Company CIN</label>
+                                <input type="text" class="form-control" placeholder="U12345AB2020PLC123456">
+                            </div>
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Confirm Password</label>
+                                <input type="password" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn--primary btn--full-width">
+                            <i class="fas fa-user-plus"></i> Register on Blockchain
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NGO Dashboard -->
+    <div id="ngoDashboard" class="screen dashboard">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <span class="logo-icon">🌊</span>
+                BlueTrust <span class="nav-subtitle">NGO Portal</span>
+            </div>
+            <div class="nav-user">
+                <div class="user-info">
+                    <span class="user-greeting">Welcome,</span>
+                    <span class="user-name" id="ngoUserName">NGO User</span>
+                </div>
+                <button class="btn btn--secondary btn--sm" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <div class="dashboard-tabs">
+            <button class="tab-btn active" onclick="showNGOTab('overview')">
+                <i class="fas fa-tachometer-alt"></i> Overview
+            </button>
+            <button class="tab-btn" onclick="showNGOTab('projects')">
+                <i class="fas fa-seedling"></i> My Projects
+            </button>
+            <button class="tab-btn" onclick="showNGOTab('wallet')">
+                <i class="fas fa-wallet"></i> Credit Wallet
+            </button>
+            <button class="tab-btn" onclick="showNGOTab('requests')">
+                <i class="fas fa-handshake"></i> Purchase Requests
+            </button>
+            <button class="tab-btn" onclick="showNGOTab('newProject')">
+                <i class="fas fa-plus-circle"></i> New Project
+            </button>
+        </div>
+
+        <div class="container">
+            <!-- NGO Overview -->
+            <div id="ngoOverview" class="tab-content active">
+                <div class="page-header">
+                    <h2>Dashboard Overview</h2>
+                    <p>Monitor your carbon credit projects and earnings</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon projects"><i class="fas fa-seedling"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="ngoTotalProjects">0</span>
+                            <span class="stat-label">Total Projects</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon credits"><i class="fas fa-coins"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="ngoTotalCredits">0</span>
+                            <span class="stat-label">Credits Earned</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon available"><i class="fas fa-wallet"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="ngoAvailableCredits">0</span>
+                            <span class="stat-label">Available Credits</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon revenue"><i class="fas fa-rupee-sign"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="ngoTotalRevenue">₹0</span>
+                            <span class="stat-label">Total Revenue</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card__header">
+                            <h3><i class="fas fa-link"></i> Blockchain Wallet</h3>
+                        </div>
+                        <div class="card__body">
+                            <div class="wallet-display">
+                                <div class="wallet-address-container">
+                                    <label>Wallet Address:</label>
+                                    <div class="wallet-address">
+                                        <code id="ngoWalletAddress">Not connected</code>
+                                        <button class="copy-btn" onclick="copyToClipboard('ngoWalletAddress')">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="balance-display">
+                                    <span class="balance-label">BTCC Balance:</span>
+                                    <span class="balance-value" id="ngoWalletBalance">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card__header">
+                            <h3><i class="fas fa-chart-line"></i> Recent Activity</h3>
+                        </div>
+                        <div class="card__body">
+                            <div id="ngoRecentActivity" class="activity-list">
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="fas fa-info-circle"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <span>No recent activity</span>
+                                        <span class="activity-time">Start by registering a project</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NGO Projects -->
+            <div id="ngoProjects" class="tab-content">
+                <div class="page-header">
+                    <div>
+                        <h2>My Restoration Projects</h2>
+                        <p>Manage your mangrove restoration projects</p>
+                    </div>
+                    <button class="btn btn--primary" onclick="showNGOTab('newProject')">
+                        <i class="fas fa-plus"></i> Register New Project
+                    </button>
+                </div>
+                <div id="ngoProjectsList" class="projects-grid">
+                    <div class="empty-state">
+                        <i class="fas fa-seedling"></i>
+                        <h3>No Projects Yet</h3>
+                        <p>Register your first mangrove restoration project to start earning carbon credits</p>
+                        <button class="btn btn--primary" onclick="showNGOTab('newProject')">
+                            <i class="fas fa-plus"></i> Register Project
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NGO Wallet -->
+            <div id="ngoWallet" class="tab-content">
+                <div class="page-header">
+                    <h2>Carbon Credit Wallet</h2>
+                    <p>Manage your BTCC tokens and set credit prices</p>
+                </div>
+
+                <div class="wallet-dashboard">
+                    <div class="wallet-header">
+                        <div class="balance-display-large">
+                            <span class="balance-value" id="walletBalanceLarge">0</span>
+                            <span class="balance-unit">BTCC</span>
+                        </div>
+                        <div class="balance-details">
+                            <span class="balance-description">Carbon Credit Tokens</span>
+                            <div class="market-rate">
+                                Current market rate: ₹<span id="currentMarketRate">2,500</span> per credit
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cards-grid">
+                        <div class="card">
+                            <div class="card__header">
+                                <h3><i class="fas fa-tag"></i> Set Credit Price</h3>
+                            </div>
+                            <div class="card__body">
+                                <div class="form-group">
+                                    <label class="form-label">Price per Credit (INR)</label>
+                                    <div class="price-input-container">
+                                        <span class="price-currency">₹</span>
+                                        <input type="number" class="form-control" id="creditPriceInput" 
+                                               min="1000" max="10000" value="2500" step="100">
+                                        <span class="price-suffix">per credit</span>
+                                    </div>
+                                </div>
+                                <div class="price-suggestion">
+                                    Suggested range: ₹2,000 - ₹3,500 based on market conditions
+                                </div>
+                                <button class="btn btn--primary" onclick="updateCreditPrice()">
+                                    <i class="fas fa-save"></i> Update Price
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card__header">
+                                <h3><i class="fas fa-history"></i> Transaction History</h3>
+                            </div>
+                            <div class="card__body">
+                                <div id="transactionHistory" class="transaction-list">
+                                    <div class="empty-state-small">
+                                        <i class="fas fa-receipt"></i>
+                                        <span>No transactions yet</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NGO Purchase Requests -->
+            <div id="ngoRequests" class="tab-content">
+                <div class="page-header">
+                    <h2>Purchase Requests</h2>
+                    <p>Review and approve carbon credit purchase requests</p>
+                </div>
+                <div id="purchaseRequestsList" class="requests-list">
+                    <div class="empty-state">
+                        <i class="fas fa-handshake"></i>
+                        <h3>No Purchase Requests</h3>
+                        <p>Companies will be able to request carbon credits from your verified projects</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NGO New Project -->
+            <div id="ngoNewProject" class="tab-content">
+                <div class="page-header">
+                    <h2>Register New Project</h2>
+                    <p>Register a new mangrove restoration project on the blockchain</p>
+                </div>
+
+                <div class="project-form-container">
+                    <form class="project-form" onsubmit="submitNewProject(event)">
+                        <div class="form-section">
+                            <h3><i class="fas fa-info-circle"></i> Project Information</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Project Name *</label>
+                                    <input type="text" name="projectName" class="form-control" 
+                                           placeholder="e.g., Sundarbans Mangrove Restoration" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Location *</label>
+                                    <input type="text" name="location" class="form-control" 
+                                           placeholder="e.g., West Bengal, India" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3><i class="fas fa-map-marker-alt"></i> Location Details</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Latitude</label>
+                                    <input type="number" name="latitude" class="form-control" 
+                                           step="any" placeholder="21.9497">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Longitude</label>
+                                    <input type="number" name="longitude" class="form-control" 
+                                           step="any" placeholder="88.9468">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3><i class="fas fa-seedling"></i> Project Metrics</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Area (Hectares) *</label>
+                                    <input type="number" name="area" class="form-control" 
+                                           step="0.1" min="0.1" placeholder="5.2" required>
+                                    <small class="form-help">Approximate area of mangrove restoration</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Trees Planted *</label>
+                                    <input type="number" name="treesPlanted" class="form-control" 
+                                           min="1" placeholder="2600" required>
+                                    <small class="form-help">Total number of mangrove saplings planted</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3><i class="fas fa-file-alt"></i> Project Description</h3>
+                            <div class="form-group">
+                                <label class="form-label">Description *</label>
+                                <textarea name="description" class="form-control" rows="4" 
+                                          placeholder="Describe your mangrove restoration project, including objectives, methods, and expected outcomes..." required></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3><i class="fas fa-camera"></i> Project Documentation</h3>
+                            <div class="form-group">
+                                <label class="form-label">Project Photos</label>
+                                <input type="file" class="form-control" multiple accept="image/*" id="projectPhotos">
+                                <small class="form-help">Upload photos of your restoration site (before/after, saplings, etc.)</small>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn--secondary" onclick="showNGOTab('projects')">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                            <button type="submit" class="btn btn--primary">
+                                <i class="fas fa-upload"></i> Register on Blockchain
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Government Dashboard -->
+    <div id="governmentDashboard" class="screen dashboard">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <span class="logo-icon">🌊</span>
+                BlueTrust <span class="nav-subtitle">Government Portal</span>
+            </div>
+            <div class="nav-user">
+                <div class="user-info">
+                    <span class="user-greeting">Welcome,</span>
+                    <span class="user-name" id="govUserName">Government User</span>
+                </div>
+                <button class="btn btn--secondary btn--sm" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <div class="dashboard-tabs">
+            <button class="tab-btn active" onclick="showGovTab('overview')">
+                <i class="fas fa-tachometer-alt"></i> Overview
+            </button>
+            <button class="tab-btn" onclick="showGovTab('verification')">
+                <i class="fas fa-check-circle"></i> Verification Queue
+            </button>
+            <button class="tab-btn" onclick="showGovTab('analytics')">
+                <i class="fas fa-chart-line"></i> Analytics
+            </button>
+            <button class="tab-btn" onclick="showGovTab('management')">
+                <i class="fas fa-users-cog"></i> NGO Management
+            </button>
+        </div>
+
+        <div class="container">
+            <!-- Government Overview -->
+            <div id="govOverview" class="tab-content active">
+                <div class="page-header">
+                    <h2>Government Dashboard</h2>
+                    <p>Monitor and verify carbon credit projects across India</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon projects"><i class="fas fa-list"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="totalRegisteredProjects">0</span>
+                            <span class="stat-label">Total Projects</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon pending"><i class="fas fa-clock"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="pendingVerifications">0</span>
+                            <span class="stat-label">Pending Verifications</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon verified"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="totalCreditsMinted">0</span>
+                            <span class="stat-label">Credits Minted</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon area"><i class="fas fa-leaf"></i></div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="totalAreaRestored">0</span>
+                            <span class="stat-label">Hectares Restored</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card__header">
+                            <h3><i class="fas fa-network-wired"></i> Blockchain Network Status</h3>
+                        </div>
+                        <div class="card__body">
+                            <div class="network-status-grid">
+                                <div class="status-item">
+                                    <span class="status-dot success"></span>
+                                    <span>Smart Contract: Active</span>
+                                    <span class="status-detail">All functions operational</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-dot success"></span>
+                                    <span>Token Contract: Operational</span>
+                                    <span class="status-detail">BTCC minting enabled</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-dot success"></span>
+                                    <span>Local Node: Connected</span>
+                                    <span class="status-detail">http://localhost:8545</span>
+                                </div>
+                                <div class="status-item">
+                                    <span class="status-dot success"></span>
+                                    <span>Verifier: Authorized</span>
+                                    <span class="status-detail">Can mint credits</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card__header">
+                            <h3><i class="fas fa-check-double"></i> Recent Verifications</h3>
+                        </div>
+                        <div class="card__body">
+                            <div id="recentVerifications" class="verification-list">
+                                <div class="empty-state-small">
+                                    <i class="fas fa-clipboard-check"></i>
+                                    <span>No recent verifications</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Verification Queue -->
+            <div id="govVerification" class="tab-content">
+                <div class="page-header">
+                    <h2>Project Verification Queue</h2>
+                    <p>Review and verify carbon credit projects using satellite data</p>
+                </div>
+
+                <div class="verification-filters">
+                    <select class="form-control" id="statusFilter" onchange="filterVerifications()">
+                        <option value="">All Status</option>
+                        <option value="registered">Registered</option>
+                        <option value="under_review">Under Review</option>
+                    </select>
+                    <select class="form-control" id="locationFilter" onchange="filterVerifications()">
+                        <option value="">All Locations</option>
+                        <option value="west_bengal">West Bengal</option>
+                        <option value="gujarat">Gujarat</option>
+                        <option value="tamil_nadu">Tamil Nadu</option>
+                        <option value="odisha">Odisha</option>
+                    </select>
+                    <button class="btn btn--secondary" onclick="refreshVerificationQueue()">
+                        <i class="fas fa-sync-alt"></i> Refresh Queue
+                    </button>
+                </div>
+
+                <div id="verificationQueue" class="verification-queue">
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h3>No Projects in Queue</h3>
+                        <p>Projects registered by NGOs will appear here for verification</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics -->
+            <div id="govAnalytics" class="tab-content">
+                <div class="page-header">
+                    <h2>Platform Analytics</h2>
+                    <p>Comprehensive analysis of carbon credit activity</p>
+                </div>
+
+                <div class="analytics-grid">
+                    <div class="card">
+                        <div class="card__header">
+                            <h3><i class="fas fa-chart-bar"></i> Project Statistics</h3>
+                        </div>
+                        <div class="card__body">
+                            <div class="chart-container" id="projectStatsChart">
+                                <div class="chart-placeholder">
+                                    <i class="fas fa-chart-bar"></i>
+                                    <span>Project statistics will be displayed here</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card__header">
+                            <h3><i class="fas fa-map-marked-alt"></i> Geographic Distribution</h3>
+                        </div>
+                        <div class="card__body">
+                            <div class="state-distribution">
+                                <div class="state-item">
+                                    <span class="state-name">West Bengal</span>
+                                    <div class="state-bar">
+                                        <div class="state-progress" style="width: 0%"></div>
+                                    </div>
+                                    <span class="state-count">0 projects</span>
+                                </div>
+                                <div class="state-item">
+                                    <span class="state-name">Gujarat</span>
+                                    <div class="state-bar">
+                                        <div class="state-progress" style="width: 0%"></div>
+                                    </div>
+                                    <span class="state-count">0 projects</span>
+                                </div>
+                                <div class="state-item">
+                                    <span class="state-name">Tamil Nadu</span>
+                                    <div class="state-bar">
+                                        <div class="state-progress" style="width: 0%"></div>
+                                    </div>
+                                    <span class="state-count">0 projects</span>
+                                </div>
+                                <div class="state-item">
+                                    <span class="state-name">Odisha</span>
+                                    <div class="state-bar">
+                                        <div class="state-progress" style="width: 0%"></div>
+                                    </div>
+                                    <span class="state-count">0 projects</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NGO Management -->
+            <div id="govManagement" class="tab-content">
+                <div class="page-header">
+                    <h2>NGO Management</h2>
+                    <p>Monitor registered NGOs and their project performance</p>
+                </div>
+
+                <div id="ngoManagementList" class="management-grid">
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <h3>No Registered NGOs</h3>
+                        <p>NGOs will appear here once they register projects</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Company Dashboard -->
+    <div id="companyDashboard" class="screen dashboard">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <span class="logo-icon">🌊</span>
+                BlueTrust <span class="nav-subtitle">Corporate Portal</span>
+            </div>
+            <div class="nav-user">
+                <div class="user-info">
+                    <span class="user-greeting">Welcome,</span>
+                    <span class="user-name" id="companyUserName">Company User</span>
+                </div>
+                <button class="btn btn--secondary btn--sm" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </nav>
+
+        <div class="dashboard-tabs">
+            <button class="tab-btn active" onclick="showCompanyTab('overview')">
+                <i class="fas fa-tachometer-alt"></i> Overview
+            </button>
+            <button class="tab-btn" onclick="showCompanyTab('marketplace')">
+                <i class="fas fa-store"></i> Credit Marketplace
+            </button>
+            <button class="tab-btn" onclick="showCompanyTab('portfolio')">
+                <i class="fas fa-briefcase"></i> My Portfolio
+            </button>
+            <button class="tab-btn" onclick="showCompanyTab('reporting')">
+                <i class="fas fa-file-alt"></i> ESG Reporting
+            </button>
+        </div>
+
+        <div class="container">
+            <!-- Company Overview -->
+            <div id="companyOverview" class="tab-content active">
+                <div class="page-header">
+                    <h2>Carbon Offset Dashboard</h2>
+                    <p>Track your corporate carbon footprint and offset progress</p>
+                </div>
+
+                <div class="cards-grid">
+                    <div class="card offset-status">
+                        <div class="card__header">
+                            <h3><i class="fas fa-leaf"></i> Carbon Footprint Status</h3>
+                        </div>
+                        <div class="card__body">
+                            <div class="footprint-stats">
+                                <div class="footprint-item">
+                                    <span class="footprint-label">Annual Emissions</span>
+                                    <span class="footprint-value">500 tCO₂e</span>
+                                </div>
+                                <div class="footprint-item">
+                                    <span class="footprint-label">Credits Owned</span>
+                                    <span class="footprint-value" id="companyCreditsOwned">0</span>
+                                </div>
+                                <div class="footprint-item">
+                                    <span class="footprint-label">Offset Progress</span>
+                                    <span class="footprint-value" id="offsetPercentage">0%</span>
+                                </div>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-label">
+                                    <span>Offset Progress</span>
+                                    <span id="offsetProgressText">0 / 500 tCO₂e</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="offsetProgress" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="offset-targets">
+                                <div class="target-item">
+                                    <span>Carbon Neutral Goal</span>
+                                    <span class="target-date">2025</span>
+                                </div>
+                                <div class="target-item">
+                                    <span>Net Zero Goal</span>
+                                    <span class="target-date">2030</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card wallet-status">
+                        <div class="card__header">
+                            <h3><i class="fas fa-wallet"></i> Wallet Information</h3>
+                        </div>
+                        <div class="card__body">
+                            <div class="wallet-display">
+                                <div class="wallet-address-container">
+                                    <label>Wallet Address:</label>
+                                    <div class="wallet-address">
+                                        <code id="companyWalletAddress">Not connected</code>
+                                        <button class="copy-btn" onclick="copyToClipboard('companyWalletAddress')">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="balance-display">
+                                    <span class="balance-label">BTCC Balance:</span>
+                                    <span class="balance-value" id="companyWalletBalance">0</span>
+                                </div>
+                                <div class="eth-balance">
+                                    <span class="balance-label">ETH Balance:</span>
+                                    <span class="balance-value" id="companyEthBalance">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card__header">
+                        <h3><i class="fas fa-history"></i> Recent Transactions</h3>
+                    </div>
+                    <div class="card__body">
+                        <div id="companyRecentTransactions" class="transaction-list">
+                            <div class="empty-state-small">
+                                <i class="fas fa-receipt"></i>
+                                <span>No transactions yet</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Marketplace -->
+            <div id="companyMarketplace" class="tab-content">
+                <div class="page-header">
+                    <div>
+                        <h2>Carbon Credit Marketplace</h2>
+                        <p>Purchase verified carbon credits from restoration projects</p>
+                    </div>
+                    <div class="marketplace-stats">
+                        <span class="market-stat">
+                            <i class="fas fa-coins"></i>
+                            Market Rate: ₹<span id="marketRate">2,500</span>/credit
+                        </span>
+                        <span class="market-stat">
+                            <i class="fas fa-chart-line"></i>
+                            Available: <span id="availableCredits">0</span> credits
+                        </span>
+                        <span class="market-stat">
+                            <i class="fas fa-users"></i>
+                            Active Sellers: <span id="activeSellers">0</span> NGOs
+                        </span>
+                    </div>
+                </div>
+
+                <div class="marketplace-filters">
+                    <select class="form-control" id="locationFilter" onchange="filterMarketplace()">
+                        <option value="">All Locations</option>
+                        <option value="west_bengal">West Bengal</option>
+                        <option value="gujarat">Gujarat</option>
+                        <option value="tamil_nadu">Tamil Nadu</option>
+                        <option value="odisha">Odisha</option>
+                    </select>
+                    <select class="form-control" id="priceFilter" onchange="filterMarketplace()">
+                        <option value="">All Prices</option>
+                        <option value="low">Under ₹2,000</option>
+                        <option value="medium">₹2,000 - ₹3,000</option>
+                        <option value="high">Above ₹3,000</option>
+                    </select>
+                    <select class="form-control" id="ratingFilter" onchange="filterMarketplace()">
+                        <option value="">All Ratings</option>
+                        <option value="high">4+ Stars</option>
+                        <option value="verified">Verified Only</option>
+                    </select>
+                    <button class="btn btn--secondary" onclick="refreshMarketplace()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="creditMarketplace" class="marketplace-grid">
+                    <div class="empty-state">
+                        <i class="fas fa-store"></i>
+                        <h3>No Credits Available</h3>
+                        <p>Verified projects will list their carbon credits here for purchase</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Portfolio -->
+            <div id="companyPortfolio" class="tab-content">
+                <div class="page-header">
+                    <h2>My Carbon Credit Portfolio</h2>
+                    <p>View and manage your owned carbon credits</p>
+                </div>
+
+                <div class="portfolio-summary">
+                    <div class="card">
+                        <div class="card__body">
+                            <div class="portfolio-stats">
+                                <div class="portfolio-stat">
+                                    <span class="stat-label">Total Credits Owned</span>
+                                    <span class="stat-value" id="totalCreditsOwned">0</span>
+                                </div>
+                                <div class="portfolio-stat">
+                                    <span class="stat-label">Total Investment</span>
+                                    <span class="stat-value" id="totalInvestment">₹0</span>
+                                </div>
+                                <div class="portfolio-stat">
+                                    <span class="stat-label">Credits Retired</span>
+                                    <span class="stat-value" id="creditsRetired">0</span>
+                                </div>
+                                <div class="portfolio-stat">
+                                    <span class="stat-label">Portfolio Value</span>
+                                    <span class="stat-value" id="portfolioValue">₹0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="portfolioHoldings" class="portfolio-holdings">
+                    <div class="empty-state">
+                        <i class="fas fa-briefcase"></i>
+                        <h3>No Credits Owned</h3>
+                        <p>Purchase carbon credits from the marketplace to build your portfolio</p>
+                        <button class="btn btn--primary" onclick="showCompanyTab('marketplace')">
+                            <i class="fas fa-shopping-cart"></i> Browse Marketplace
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ESG Reporting -->
+            <div id="companyReporting" class="tab-content">
+                <div class="page-header">
+                    <h2>ESG Reporting</h2>
+                    <p>Generate environmental impact reports for compliance and stakeholders</p>
+                </div>
+
+                <div class="reporting-controls">
+                    <div class="report-filters">
+                        <select class="form-control" id="reportPeriod">
+                            <option value="monthly">Monthly Report</option>
+                            <option value="quarterly">Quarterly Report</option>
+                            <option value="annually">Annual Report</option>
+                        </select>
+                        <select class="form-control" id="reportYear">
+                            <option value="2025">2025</option>
+                            <option value="2024">2024</option>
+                        </select>
+                    </div>
+                    <div class="report-actions">
+                        <button class="btn btn--secondary" onclick="generateReport()">
+                            <i class="fas fa-file-alt"></i> Generate Report
+                        </button>
+                        <button class="btn btn--primary" onclick="downloadReport()">
+                            <i class="fas fa-download"></i> Download PDF
+                        </button>
+                    </div>
+                </div>
+
+                <div class="reporting-metrics">
+                    <div class="card">
+                        <div class="card__header">
+                            <h3><i class="fas fa-chart-pie"></i> Carbon Impact Summary</h3>
+                        </div>
+                        <div class="card__body">
+                            <div class="impact-metrics">
+                                <div class="impact-item">
+                                    <div class="impact-icon">
+                                        <i class="fas fa-factory"></i>
+                                    </div>
+                                    <div class="impact-content">
+                                        <span class="impact-label">Total Emissions</span>
+                                        <span class="impact-value">500 tCO₂e</span>
+                                    </div>
+                                </div>
+                                <div class="impact-item">
+                                    <div class="impact-icon">
+                                        <i class="fas fa-leaf"></i>
+                                    </div>
+                                    <div class="impact-content">
+                                        <span class="impact-label">Credits Retired</span>
+                                        <span class="impact-value" id="reportCreditsRetired">0 tCO₂e</span>
+                                    </div>
+                                </div>
+                                <div class="impact-item">
+                                    <div class="impact-icon">
+                                        <i class="fas fa-percentage"></i>
+                                    </div>
+                                    <div class="impact-content">
+                                        <span class="impact-label">Offset Percentage</span>
+                                        <span class="impact-value" id="reportOffsetPercentage">0%</span>
+                                    </div>
+                                </div>
+                                <div class="impact-item">
+                                    <div class="impact-icon">
+                                        <i class="fas fa-seedling"></i>
+                                    </div>
+                                    <div class="impact-content">
+                                        <span class="impact-label">Projects Supported</span>
+                                        <span class="impact-value" id="reportProjectsSupported">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card__header">
+                            <h3><i class="fas fa-certificate"></i> Certification & Compliance</h3>
+                        </div>
+                        <div class="card__body">
+                            <div class="compliance-status">
+                                <div class="compliance-item">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    <span>All credits verified on blockchain</span>
+                                </div>
+                                <div class="compliance-item">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    <span>Mangrove restoration projects</span>
+                                </div>
+                                <div class="compliance-item">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    <span>Transparent transaction history</span>
+                                </div>
+                                <div class="compliance-item">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    <span>Real-time satellite monitoring</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="successModal" class="modal hidden">
+        <div class="modal-content success">
+            <div class="modal-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h3 id="successTitle">Success!</h3>
+            <p id="successMessage">Operation completed successfully.</p>
+            <button class="btn btn--primary" onclick="closeModal('successModal')">
+                <i class="fas fa-check"></i> OK
+            </button>
+        </div>
+    </div>
+
+    <div id="errorModal" class="modal hidden">
+        <div class="modal-content error">
+            <div class="modal-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3>Error</h3>
+            <p id="errorMessage">An error occurred.</p>
+            <button class="btn btn--secondary" onclick="closeModal('errorModal')">
+                <i class="fas fa-times"></i> Close
+            </button>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal hidden">
+        <div class="modal-content confirm">
+            <div class="modal-icon">
+                <i class="fas fa-question-circle"></i>
+            </div>
+            <h3 id="confirmTitle">Confirm Action</h3>
+            <p id="confirmMessage">Are you sure you want to proceed?</p>
+            <div class="modal-actions">
+                <button class="btn btn--secondary" onclick="closeModal('confirmModal')">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button class="btn btn--primary" id="confirmButton" onclick="handleConfirmAction()">
+                    <i class="fas fa-check"></i> Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/contract-config.js"></script>
+    <script src="js/web3-local.js"></script>
+    <script src="js/satellite-simulation.js"></script>
+    <script src="js/blockchain-local.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
